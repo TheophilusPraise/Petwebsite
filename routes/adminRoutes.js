@@ -12,7 +12,8 @@ import {
   deletePet,
   manageNotifications,
   sendNotification,
-  sendBroadcast
+  sendBroadcast,
+  createPetByAdmin
 } from '../controllers/adminController.js';
 import { isAdmin } from '../middleware/authMiddleware.js';
 
@@ -42,5 +43,13 @@ router.post('/notifications/send', isAdmin, sendNotification);
 
 // Broadcast Route
 router.post('/broadcast', isAdmin, sendBroadcast);
+import multer from 'multer';
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, 'public/uploads/'),
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+});
+const upload = multer({ storage });
+
+router.post('/pets/create', isAdmin, upload.single('image'), createPetByAdmin);
 
 export default router;

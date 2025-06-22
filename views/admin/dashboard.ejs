@@ -204,6 +204,7 @@
       <a href="#" onclick="openModal('users-modal')">Users</a>
       <a href="#" onclick="openModal('bookings-modal')">Bookings</a>
       <a href="#" onclick="openModal('pets-modal')">Pets</a>
+      <a href="#" onclick="openModal('purchases-modal')">Purchases</a>
       <a href="#" onclick="openModal('notifications-modal')">Notifications</a>
       <a href="/auth/logout">Logout</a>
     </nav>
@@ -216,36 +217,86 @@
         <i class="fa-solid fa-users"></i>
         <h3>Total Users</h3>
         <p><%= stats.totalUsers || 0 %></p>
+          <button class="btn" onclick="openModal('create-user-modal')">
+        <i class="fa-solid fa-user-plus"></i> Add User
+      </button>
       </div>
       
             <div class="dashboard-card">
         <i class="fa-solid fa-calendar-check"></i>
         <h3 >Total Bookings</h3>
         <p><%= stats.totalBookings || 0 %></p>
+             <button class="btn" onclick="openModal('create-booking-modal')">
+        <i class="fa-solid fa-calendar-plus"></i> Add Booking
+      </button>
       </div>
       
-            <div class="dashboard-card">
-        <i class="fa-solid fa-paw"></i>
-        <h3>Total Pets</h3>
-        <p><%= stats.totalPets || 0 %></p>
-      </div>
-      
+  <div class="dashboard-card">
+  <i class="fa-solid fa-paw"></i>
+  <h3>Total Pets</h3>
+  <p><%= stats.totalPets || 0 %></p>
+  <button class="btn"
+    onclick="openModal('add-pet-modal')">
+    <i class="fa-solid fa-plus"></i> Add Pet
+  </button>
+</div>
+
             <div class="dashboard-card">
         <i class="fa-solid fa-bell"></i>
         <h3>Total Notifications</h3>
         <p><%= stats.totalNotifications || 0 %></p>
+        <button class="btn" onclick="openModal('notifications-modal')">
+  <i class="fa-solid fa-bell"></i> View Notifications
+</button>
       </div>
     </div>
+<!-- In admin/dashboard.ejs -->
+<div class="dashboard-card">
+  <i class="fa-solid fa-money-bill-wave"></i>
+  <h3>Total Purchases</h3>
+  <p><%= stats.totalPurchases || 0 %></p>
+  <button class="btn" onclick="openModal('purchases-modal')">
+  <i class="fa-solid fa-receipt"></i> View Purchases
+</button>
+</div>
 
-    <div class="admin-actions">
-      <button class="btn" onclick="openModal('create-user-modal')">
-        <i class="fa-solid fa-user-plus"></i> Add User
-      </button>
-      <button class="btn" onclick="openModal('create-booking-modal')">
-        <i class="fa-solid fa-calendar-plus"></i> Add Booking
-      </button>
-    </div>
-    
+
+<!-- Purchases Modal -->
+<div id="purchases-modal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal('purchases-modal')">&times;</span>
+    <h2>Purchase History</h2>
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>User</th>
+          <th>Plan</th>
+          <th>Amount</th>
+          <th>Date</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% purchases.forEach(purchase => { %>
+          <tr>
+            <td><%= purchase.id %></td>
+            <td><%= purchase.user_email %></td>
+            <td><%= purchase.plan %></td>
+            <td>₦<%= purchase.amount %></td>
+            <td><%= new Date(purchase.created_at).toLocaleDateString() %></td>
+            <td><span class="status-badge status-<%= purchase.status %>"><%= purchase.status %></span></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+    <!-- Add to your admin actions -->
+
+
     <!-- Broadcast Form -->
     <div class="broadcast-form">
       <h3>Send Message to All Users</h3>
@@ -286,7 +337,7 @@
           <button class="btn-edit" onclick="openModal('edit-user-modal-<%= user.id %>')">
             <i class="fa-solid fa-edit"></i>
           </button>
-          <button class="btn-delete" onclick="deleteUser(<%= user.id %>)">
+          <button class="btn-delete" onclick="deleteUser('<%= user.id %>')">
             <i class="fa-solid fa-trash"></i>
           </button>
         </td>
@@ -523,6 +574,39 @@
       </table>
     </div>
   </div>
+<div id="add-pet-modal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal('add-pet-modal')">&times;</span>
+    <h2>Add New Pet</h2>
+    <form action="/admin/pets/create" method="POST" enctype="multipart/form-data">
+      <div class="form-group">
+        <label>Pet Name:</label>
+        <input type="text" name="name" required>
+      </div>
+      <div class="form-group">
+        <label>Species:</label>
+        <input type="text" name="species" required>
+      </div>
+      <div class="form-group">
+        <label>Breed:</label>
+        <input type="text" name="breed">
+      </div>
+      <div class="form-group">
+        <label>Age:</label>
+        <input type="number" name="age">
+      </div>
+      <div class="form-group">
+        <label>Owner (User Email):</label>
+        <input type="email" name="owner_email" required>
+      </div>
+      <div class="form-group">
+        <label>Image:</label>
+        <input type="file" name="image">
+      </div>
+      <button type="submit" class="btn-submit">Add Pet</button>
+    </form>
+  </div>
+</div>
 
     <!-- footer starts -->
     <section class="footer">

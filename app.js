@@ -107,6 +107,11 @@ import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
+// At the top with other imports
+import pricingRoutes from './routes/pricingRoutes.js';
+
+// After other route declarations
+app.use('/', pricingRoutes);
 
 // Database connection
 import './models/db.js';
@@ -160,7 +165,8 @@ app.get('/', (req, res) => {
 app.get('/index', (req, res) => res.render('index'));
 app.get('/about', (req, res) => res.render('about'));
 app.get('/contact', (req, res) => res.render('contact'));
-app.get('/pricing', (req, res) => res.render('pricing'));
+
+
 app.get('/services', (req, res) => res.render('services'));
 app.get('/book', (req, res) => {
   res.render('user/book', { service: req.query.service || '' });

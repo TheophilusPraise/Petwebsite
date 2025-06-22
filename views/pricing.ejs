@@ -4,87 +4,155 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PetsMania - Ultimate Mart For Pets</title>
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/services.css">
-    <link rel="stylesheet" href="../css/pricing.css">
-    <link rel="shortcut icon" href="../assets/Favicon.ico" type="image/jpeg">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/services.css">
+    <link rel="stylesheet" href="/css/pricing.css">
+    <link rel="shortcut icon" href="/assets/Favicon.ico" type="image/jpeg">
+    <script src="https://kit.fontawesome.com/cb8535f973.js" crossorigin="anonymous"></script>
 </head>
 <body>
-    <header class="header">
-        <a href="/index" class="logo"><i class="fa-solid fa-paw"></i>Pet<span>Care</span></a>
+  <header class="header">
+        <a href="/dashboard/user" class="logo"><i class="fa-solid fa-paw"></i>Pet<span>Care</span></a>
         <nav class="navbar">
-            <a href="/index">Home</a>
-            <a href="/services">Services</a>
-            <a href="/pricing">Pricing</a>
-            <a href="/about">About Us</a>
-            <a href="/contact">Contact Us</a>
-         <a href="/auth/login">Login</a>
+            <a href="/dashboard/user" class="active">Dashboard</a>
+             <a href="/user/services">Services</a>
+            <a href="/user/bookings">Bookings</a>
+                <a href="/pricing">Pricing</a>
+            <a href="/user/pets">My Pets</a>
+            <a href="/user/notifications">Notifications</a>
+            <a href="/auth/logout">Logout</a>
         </nav>
         <i id="menu-btn" class="fas fa-bars"></i>
     </header>
 
-    <section class="pricing">
-        <h1 class="heading">Our Pricings</h1>
-        <div class="pricelist">
+<section class="pricing">
+    <h1 class="heading">Our Pricings</h1>
+    <div class="pricelist">
         <div class="columns">
             <h3 class="headers">Basic</h3>
             <ul class="price">
-              <li class="grey">$ 9.99 / year</li>
-              <li class="offers">2 hour free shelter</li>
-              <li class="offers">Grooming per month</li>
-              <li class="offers">1 hour/month Training And Gym Facility</li>
-              <li class="offers">1 time quality food a week</li>
-              <li class="offers">Checkup 1 per 3 months</li>
-              <li class="grey"><a href="#" class="button">Buy Now</a></li>
+                <li class="grey">$9.99 / year</li>
+                <li class="offers">2 hour free shelter</li>
+                <li class="offers">Grooming per month</li>
+                <li class="offers">1 hour/month Training And Gym Facility</li>
+                <li class="offers">1 time quality food a week</li>
+                <li class="offers">Checkup 1 per 3 months</li>
+                <% if (user) { %>
+                    <a href="javascript:void(0);" class="offer"
+                       style="display:inline-block; background:#27ae60; color:#fff; border:none; border-radius:2rem; padding:0.7rem 2rem; font-size:1.1rem; font-weight:bold; text-decoration:none; margin-top:1rem; box-shadow:0 2px 8px rgba(44,62,80,0.10); transition:background 0.2s,transform 0.2s; cursor:pointer;"
+                       onmouseover="this.style.background='#219150';this.style.transform='scale(1.04)'"
+                       onmouseout="this.style.background='#27ae60';this.style.transform='scale(1)'"
+                       onclick="makeRemitaPayment('Basic', 999, '<%= user.email %>', '<%= user.name || user.email %>')">
+                      Buy Now
+                    </a>
+                <% } else { %>
+                    <a href="/auth/login" class="offer"
+                       style="display:inline-block; background:#27ae60; color:#fff; border:none; border-radius:2rem; padding:0.7rem 2rem; font-size:1.1rem; font-weight:bold; text-decoration:none; margin-top:1rem; box-shadow:0 2px 8px rgba(44,62,80,0.10); transition:background 0.2s,transform 0.2s; cursor:pointer;"
+                       onmouseover="this.style.background='#219150';this.style.transform='scale(1.04)'"
+                       onmouseout="this.style.background='#27ae60';this.style.transform='scale(1)'">
+                      Login to Buy
+                    </a>
+                <% } %>
             </ul>
-          </div><div class="columns">
-              <h3 class="headers">Pro</h3>
+        </div>
+        <div class="columns">
+            <h3 class="headers">Pro</h3>
             <ul class="price">
-                <li class="grey">$ 24.99 / year</li>
+                <li class="grey">$24.99 / year</li>
                 <li class="offers">8 hour free shelter</li>
                 <li class="offers">Grooming per month</li>
-                <li class="offers"> 2 Hour/Week Training And Gym Facility</li>
+                <li class="offers">2 Hour/Week Training And Gym Facility</li>
                 <li class="offers">2 times quality food per 4 days</li>
                 <li class="offers">Checkup twice per 3 months</li>
-                <li class="grey"><a href="#" class="button">Buy Now</a></li>
+                <% if (user) { %>
+                    <a href="javascript:void(0);" class="offer"
+                       style="display:inline-block; background:#27ae60; color:#fff; border:none; border-radius:2rem; padding:0.7rem 2rem; font-size:1.1rem; font-weight:bold; text-decoration:none; margin-top:1rem; box-shadow:0 2px 8px rgba(44,62,80,0.10); transition:background 0.2s,transform 0.2s; cursor:pointer;"
+                       onmouseover="this.style.background='#219150';this.style.transform='scale(1.04)'"
+                       onmouseout="this.style.background='#27ae60';this.style.transform='scale(1)'"
+                       onclick="makeRemitaPayment('Pro', 2499, '<%= user.email %>', '<%= user.name || user.email %>')">
+                      Buy Now
+                    </a>
+                <% } else { %>
+                    <a href="/auth/login" class="offer"
+                       style="display:inline-block; background:#27ae60; color:#fff; border:none; border-radius:2rem; padding:0.7rem 2rem; font-size:1.1rem; font-weight:bold; text-decoration:none; margin-top:1rem; box-shadow:0 2px 8px rgba(44,62,80,0.10); transition:background 0.2s,transform 0.2s; cursor:pointer;"
+                       onmouseover="this.style.background='#219150';this.style.transform='scale(1.04)'"
+                       onmouseout="this.style.background='#27ae60';this.style.transform='scale(1)'">
+                      Login to Buy
+                    </a>
+                <% } %>
             </ul>
-          </div>
-          <div class="columns">
+        </div>
+        <div class="columns">
             <h3 class="headers">Premium</h3>
             <ul class="price">
-                <li class="grey">$ 49.99 / year</li>
+                <li class="grey">$49.99 / year</li>
                 <li class="offers">Unlimited free shelter</li>
                 <li class="offers">Grooming per month</li>
                 <li class="offers">Unlimited Training And Gym Facility</li>
                 <li class="offers">4 time quality food per day</li>
                 <li class="offers">Checkup 1 time per month</li>
-                <li class="grey"><a href="#" class="button">Buy Now</a></li>
+                <% if (user) { %>
+                    <a href="javascript:void(0);" class="offer"
+                       style="display:inline-block; background:#27ae60; color:#fff; border:none; border-radius:2rem; padding:0.7rem 2rem; font-size:1.1rem; font-weight:bold; text-decoration:none; margin-top:1rem; box-shadow:0 2px 8px rgba(44,62,80,0.10); transition:background 0.2s,transform 0.2s; cursor:pointer;"
+                       onmouseover="this.style.background='#219150';this.style.transform='scale(1.04)'"
+                       onmouseout="this.style.background='#27ae60';this.style.transform='scale(1)'"
+                       onclick="makeRemitaPayment('Premium', 4999, '<%= user.email %>', '<%= user.name || user.email %>')">
+                      Buy Now
+                    </a>
+                <% } else { %>
+                    <a href="/auth/login" class="offer"
+                       style="display:inline-block; background:#27ae60; color:#fff; border:none; border-radius:2rem; padding:0.7rem 2rem; font-size:1.1rem; font-weight:bold; text-decoration:none; margin-top:1rem; box-shadow:0 2px 8px rgba(44,62,80,0.10); transition:background 0.2s,transform 0.2s; cursor:pointer;"
+                       onmouseover="this.style.background='#219150';this.style.transform='scale(1.04)'"
+                       onmouseout="this.style.background='#27ae60';this.style.transform='scale(1)'">
+                      Login to Buy
+                    </a>
+                <% } %>
             </ul>
-          </div>
         </div>
-    </section>
-
+    </div>
+</section>
 
     <!-- footer starts -->
     <section class="footer">
         <div class="footer-content">
-           <h3><i class="fa-solid fa-paw"></i>Pet<span>Care</span></h3> 
-           <p>PetCare is a pet caring shop, where we provide facilites and various useful treatments. We offer Massage, a good ground, expert staff, good facilites and much more! Visit us anytime :). We are closed only on thrusday and our regular timings are 9:00AM to 10:00PM.</p>
-           <ul class="socials">
-            <li><a href=”#”><i class="fa fa-facebook"></i></a></li>
-            <li><a href=”#”><i class="fa fa-twitter"></i></a></li>
-            <li><a href=”#”><i class="fa-brands fa-google-plus-g"></i></a></li>
-            <li><a href=”#”><i class="fa fa-youtube"></i></a></li>
-            <li><a href=”#”><i class="fa fa-linkedin-square"></i></a></li>
-         </ul>
+            <h3><i class="fa-solid fa-paw"></i>Pet<span>Care</span></h3> 
+            <p>PetCare is a pet caring shop, where we provide facilities and various useful treatments. We offer Massage, a good ground, expert staff, good facilities and much more! Visit us anytime :). We are closed only on Thursday and our regular timings are 9:00AM to 10:00PM.</p>
+            <ul class="socials">
+                <li><a href="#"><i class="fa fa-facebook"></i></a></li>
+                <li><a href="#"><i class="fa fa-twitter"></i></a></li>
+                <li><a href="#"><i class="fa-brands fa-google-plus-g"></i></a></li>
+                <li><a href="#"><i class="fa fa-youtube"></i></a></li>
+                <li><a href="#"><i class="fa fa-linkedin-square"></i></a></li>
+            </ul>
         </div>
     </section>
     <div class="footer-bottom">
-       <p>copyright &copy;2023 <a href=”#”>Jay Patel</a> - Pet Care </p>
+        <p>copyright &copy;2025 <a href="#">Shode</a> - Pet Care</p>
     </div>
-    <script src="https://kit.fontawesome.com/cb8535f973.js" crossorigin="anonymous"></script>
-        <script> window.chtlConfig = { chatbotId: "5358877347" } </script>
-        <script async data-id="5358877347" id="chtl-script" type="text/javascript" src="https://chatling.ai/js/embed.js"></script>
-    <script src="./js/script.js"></script>
+    <script src="https://remitademo.net/payment/v1/remita-pay-inline.bundle.js"></script>
+    <script>
+      function makeRemitaPayment(plan, price, userEmail, userName) {
+        var paymentEngine = RmPaymentEngine.init({
+          key: 'YOUR_PUBLIC_KEY', // Replace with your Remita public key
+          transactionId: 'PETCARE-' + Date.now(), // Unique reference
+          customerId: userEmail,
+          firstName: userName || 'PetCare User',
+          lastName: '',
+          email: userEmail,
+          amount: price,
+          narration: 'PetCare ' + plan + ' Plan Subscription',
+          onSuccess: function (response) {
+            alert('Payment successful! Reference: ' + response.transactionId);
+            // Optionally, send AJAX to your backend to save payment record
+          },
+          onError: function (response) {
+            alert('Payment failed: ' + response.message);
+          },
+          onClose: function () {}
+        });
+        paymentEngine.showPaymentWidget();
+      }
+    </script>
+    <script src="/js/script.js"></script>
 </body>
-</html> 
+</html>

@@ -10,7 +10,15 @@ export const getAdminDashboard = async (req, res) => {
     const [[{ totalBookings }]] = await pool.query('SELECT COUNT(*) AS totalBookings FROM bookings');
     const [[{ totalPets }]] = await pool.query('SELECT COUNT(*) AS totalPets FROM pets');
     const [[{ totalNotifications }]] = await pool.query('SELECT COUNT(*) AS totalNotifications FROM notifications');
+    const [[{ totalPurchases }]] = await pool.query('SELECT COUNT(*) AS totalPurchases FROM purchases');
     
+    // Get purchases data
+    const [purchases] = await pool.query(`
+      SELECT p.*, u.email AS user_email 
+      FROM purchases p 
+      JOIN users u ON p.user_id = u.id 
+      ORDER BY p.created_at DESC
+    `);
     // Get actual data for modals
     const [users] = await pool.query('SELECT id, email, role FROM users ORDER BY id DESC');
     const [bookings] = await pool.query(`
@@ -40,11 +48,12 @@ export const getAdminDashboard = async (req, res) => {
     });
 
     res.render('admin/dashboard', {
-      stats: { totalUsers, totalBookings, totalPets, totalNotifications },
+      stats: { totalUsers, totalBookings, totalPets, totalNotifications, totalPurchases },
       users,
       bookings,
       pets,
-      notifications
+      notifications,
+      purchases: purchases || []
     });
   } catch (err) {
     console.error('Admin dashboard error:', err);
@@ -195,4 +204,26 @@ export const managePets = async (req, res) => {
 
 export const manageNotifications = async (req, res) => {
   res.redirect('/admin/dashboard');
+};
+export const createPetByAdmin = async (req, res) => {
+  try {
+    const { name, species, breed, age, owner_email } = req.body;
+    // Find user by email
+    const [users] = await pool.query('SELECT id FROM users WHERE email = ?', [owner_email]);
+    if (!users.length) {
+      return res.redirect('/admin/dashboard?error=user_not_found');
+    }
+    const userId = users[0].id;
+    let image_url = null;
+    if (req.file) image_url = '/uploads/' + req.file.filename;
+
+    await pool.execute(
+      'INSERT INTO pets (name, species, breed, age, image_url, user_id) VALUES (?, ?, ?, ?, ?, ?)',
+      [name, species, breed || null, age || null, image_url, userId]
+    );
+    res.redirect('/admin/dashboard?success=pet_added');
+  } catch (err) {
+    console.error('Admin add pet error:', err);
+    res.redirect('/admin/dashboard?error=pet_add_failed');
+  }
 };
