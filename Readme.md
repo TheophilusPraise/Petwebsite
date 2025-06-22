@@ -41,6 +41,6 @@ A complete PetCare Management Web Application built using **Node.js**, **Express
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/your-username/petcare-website.git
+   git clone https://github.com/TheophilusPraise/Petwebsite
    cd petcare-website
 # Petwebsite
