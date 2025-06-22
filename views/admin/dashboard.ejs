@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard - PetCare</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/services.css">
+    <link rel="stylesheet" href="/css/about.css">
+    <link rel="stylesheet" href="/css/dashboard.css"> 
+  <link rel="shortcut icon" href="../assets/Favicon.ico" type="image/jpeg">
+  <script src="https://kit.fontawesome.com/cb8535f973.js" crossorigin="anonymous"></script>
+  <style>
+    /* Dashboard Styles */
+
+    .dashboard-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      padding: 1.5rem;
+      text-align: center;
+      transition: transform 0.3s;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .stat-card i {
+      font-size: 2.5rem;
+      color: #e74c3c;
+      margin-bottom: 1rem;
+    }
+    
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.7);
+      overflow: auto;
+    }
+    
+    .modal-content {
+      background-color: #fff;
+      margin: 10% auto;
+      padding: 2rem;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 700px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      position: relative;
+    }
+    
+    .close {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    
+    /* Table Styles */
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    
+    .admin-table th, .admin-table td {
+      padding: 0.8rem;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .admin-table th {
+      background: #f8f9fa;
+    }
+    
+    /* Button Styles */
+    .btn-edit, .btn-delete {
+      border: none;
+      padding: 0.5rem;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 0.5rem;
+    }
+    
+    .btn-edit {
+      background: #3498db;
+      color: white;
+    }
+    
+    .btn-delete {
+      background: #e74c3c;
+      color: white;
+    }
+    
+    .btn-action {
+      background: #2c3e50;
+      color: white;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      margin-top: 1rem;
+    }
+    
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+    
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 0.8rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    
+    .btn-submit {
+      background: #27ae60;
+      color: white;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      margin-top: 1rem;
+    }
+
+    /* Status badges */
+    .status-badge {
+      display: inline-block;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    
+    .status-pending {
+      background: rgba(243, 156, 18, 0.1);
+      color: #f39c12;
+    }
+    
+    .status-confirmed {
+      background: rgba(39, 174, 96, 0.1);
+      color: #27ae60;
+    }
+    
+    .status-cancelled {
+      background: rgba(231, 76, 60, 0.1);
+      color: #e74c3c;
+    }
+    
+    .status-completed {
+      background: rgba(52, 152, 219, 0.1);
+      color: #3498db;
+    }
+    
+    /* Broadcast form */
+    .broadcast-form {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .broadcast-form h3 {
+      margin-bottom: 1rem;
+    }
+    
+    .broadcast-form textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+        <a href="/admin/dashboard" class="logo"><i class="fa-solid fa-paw"></i>Pet<span>Care Admin</span></a>
+    </a>
+    <nav class="navbar">
+      <a href="/admin/dashboard">Dashboard</a>
+      <a href="#" onclick="openModal('users-modal')">Users</a>
+      <a href="#" onclick="openModal('bookings-modal')">Bookings</a>
+      <a href="#" onclick="openModal('pets-modal')">Pets</a>
+      <a href="#" onclick="openModal('notifications-modal')">Notifications</a>
+      <a href="/auth/logout">Logout</a>
+    </nav>
+  </header>
+
+  <section class="dashboard">
+    <h1 class="heading">System Overview</h2>
+<div class="icons-container">
+            <div class="dashboard-card">
+        <i class="fa-solid fa-users"></i>
+        <h3>Total Users</h3>
+        <p><%= stats.totalUsers || 0 %></p>
+      </div>
+      
+            <div class="dashboard-card">
+        <i class="fa-solid fa-calendar-check"></i>
+        <h3 >Total Bookings</h3>
+        <p><%= stats.totalBookings || 0 %></p>
+      </div>
+      
+            <div class="dashboard-card">
+        <i class="fa-solid fa-paw"></i>
+        <h3>Total Pets</h3>
+        <p><%= stats.totalPets || 0 %></p>
+      </div>
+      
+            <div class="dashboard-card">
+        <i class="fa-solid fa-bell"></i>
+        <h3>Total Notifications</h3>
+        <p><%= stats.totalNotifications || 0 %></p>
+      </div>
+    </div>
+
+    <div class="admin-actions">
+      <button class="btn" onclick="openModal('create-user-modal')">
+        <i class="fa-solid fa-user-plus"></i> Add User
+      </button>
+      <button class="btn" onclick="openModal('create-booking-modal')">
+        <i class="fa-solid fa-calendar-plus"></i> Add Booking
+      </button>
+    </div>
+    
+    <!-- Broadcast Form -->
+    <div class="broadcast-form">
+      <h3>Send Message to All Users</h3>
+      <form action="/admin/broadcast" method="POST">
+        <div class="form-group">
+          <input type="text" name="subject" class="form-control" placeholder="Subject" required>
+        </div>
+        <div class="form-group">
+          <textarea class="form-control" name="message" placeholder="Your message" required></textarea>
+        </div>
+        <button type="submit" class="btn">Send Broadcast</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- User Management Modal -->
+  <div id="users-modal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('users-modal')">&times;</span>
+      <h2>User Management</h2>
+      <table class="admin-table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Email</th>
+      <th>Role</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% users.forEach(user => { %>
+      <tr>
+        <td><%= user.id %></td>
+        <td><%= user.email %></td>
+        <td><%= user.role %></td>
+        <td>
+          <!-- Each button triggers its unique modal -->
+          <button class="btn-edit" onclick="openModal('edit-user-modal-<%= user.id %>')">
+            <i class="fa-solid fa-edit"></i>
+          </button>
+          <button class="btn-delete" onclick="deleteUser(<%= user.id %>)">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </td>
+      </tr>
+      <!-- Unique Edit Modal for each user -->
+      <div id="edit-user-modal-<%= user.id %>" class="modal">
+        <div class="modal-content">
+          <span class="close" onclick="closeModal('edit-user-modal-<%= user.id %>')">&times;</span>
+          <h2>Edit User</h2>
+          <form method="POST" action="/admin/users/update">
+            <input type="hidden" name="id" value="<%= user.id %>">
+            <div class="form-group">
+              <label>Email:</label>
+              <input type="email" name="email" value="<%= user.email %>" required>
+            </div>
+            <div class="form-group">
+              <label>Role:</label>
+              <select name="role" required>
+                <option value="user" <%= user.role === 'user' ? 'selected' : '' %>>User</option>
+                <option value="admin" <%= user.role === 'admin' ? 'selected' : '' %>>Admin</option>
+              </select>
+            </div>
+            <button type="submit" class="btn-submit">Update User</button>
+          </form>
+        </div>
+      </div>
+    <% }) %>
+  </tbody>
+</table>
+    </div>
+  </div>
+
+  <!-- Edit User Modal -->
+  <div id="edit-user-modal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('edit-user-modal')">&times;</span>
+      <h2>Edit User</h2>
+      <form id="edit-user-form" method="POST" action="/admin/users/update">
+        <input type="hidden" id="edit-user-id" name="id">
+        <div class="form-group">
+          <label>Email:</label>
+          <input type="email" id="edit-user-email" name="email" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label>Role:</label>
+          <select id="edit-user-role" name="role" class="form-control" required>
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <button type="submit" class="btn-submit">Update User</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Create User Modal -->
+  <div id="create-user-modal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('create-user-modal')">&times;</span>
+      <h2>Create New User</h2>
+      <form id="create-user-form" method="POST" action="/admin/users/create">
+        <div class="form-group">
+          <label>Email:</label>
+          <input type="email" name="email" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label>Password:</label>
+          <input type="password" name="password" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label>Role:</label>
+          <select name="role" class="form-control" required>
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <button type="submit" class="btn-submit">Create User</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Booking Management Modal -->
+  <div id="bookings-modal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('bookings-modal')">&times;</span>
+      <h2>Booking Management</h2>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>User</th>
+            <th>Service</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% bookings.forEach(booking => { %>
+            <tr>
+              <td><%= booking.id %></td>
+              <td><%= booking.user_email %></td>
+              <td><%= booking.service %></td>
+              <td><%= new Date(booking.booking_date).toLocaleString() %></td>
+              <td>
+                <span class="status-badge status-<%= booking.status.toLowerCase() %>">
+                  <%= booking.status %>
+                </span>
+              </td>
+              <td>
+                <button class="btn-edit"
+                  onclick='openEditBookingModal(<%= booking.id %>, <%- JSON.stringify(booking.status) %>)'>
+                  <i class="fa-solid fa-edit"></i>
+                </button>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Edit Booking Modal -->
+  <div id="edit-booking-modal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('edit-booking-modal')">&times;</span>
+      <h2>Update Booking Status</h2>
+      <form id="edit-booking-form" method="POST" action="/admin/bookings/update">
+        <input type="hidden" id="edit-booking-id" name="id">
+        <div class="form-group">
+          <label>Status:</label>
+          <select id="edit-booking-status" name="status" class="form-control" required>
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+        <button type="submit" class="btn-submit">Update Status</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Create Booking Modal -->
+  <div id="create-booking-modal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('create-booking-modal')">&times;</span>
+      <h2>Create New Booking</h2>
+      <form id="create-booking-form" method="POST" action="/admin/bookings/create">
+        <div class="form-group">
+          <label>User ID:</label>
+          <input type="number" name="user_id" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label>Service:</label>
+          <input type="text" name="service" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label>Date:</label>
+          <input type="datetime-local" name="booking_date" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label>Status:</label>
+          <select name="status" class="form-control" required>
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+          </select>
+        </div>
+        <button type="submit" class="btn-submit">Create Booking</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Pet Management Modal -->
+  <div id="pets-modal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('pets-modal')">&times;</span>
+      <h2>Pet Management</h2>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Species</th>
+            <th>Owner</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% pets.forEach(pet => { %>
+            <tr>
+              <td><%= pet.id %></td>
+              <td><%= pet.name %></td>
+              <td><%= pet.species %></td>
+              <td><%= pet.user_email %></td>
+              <td>
+                <button class="btn-delete" onclick="deletePet(<%= pet.id %>)">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Notification Management Modal -->
+  <div id="notifications-modal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('notifications-modal')">&times;</span>
+      <h2>Notification Management</h2>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>User</th>
+            <th>Message</th>
+            <th>Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% notifications.forEach(notification => { %>
+            <tr>
+              <td><%= notification.id %></td>
+              <td><%= notification.user_email %></td>
+              <td><%= notification.message %></td>
+              <td><%= new Date(notification.created_at).toLocaleString() %></td>
+              <td><%= notification.is_read ? 'Read' : 'Unread' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+    <!-- footer starts -->
+    <section class="footer">
+        <div class="footer-content">
+           <h3><i class="fa-solid fa-paw"></i>Pet<span>Care</span></h3> 
+           <p>PetCare is a pet caring shop, where we provide facilites and various useful treatments. We offer Massage, a good ground, expert staff, good facilites and much more! Visit us anytime :). We are closed only on thrusday and our regular timings are 9:00AM to 10:00PM.</p>
+           <ul class="socials">
+            <li><a href=”#”><i class="fa fa-facebook"></i></a></li>
+            <li><a href=”#”><i class="fa fa-twitter"></i></a></li>
+            <li><a href=”#”><i class="fa-brands fa-google-plus-g"></i></a></li>
+            <li><a href=”#”><i class="fa fa-youtube"></i></a></li>
+            <li><a href=”#”><i class="fa fa-linkedin-square"></i></a></li>
+         </ul>
+        </div>
+    </section>
+     <section class="footer-bottom">
+       <p>copyright &copy;<span id="currentYear"></span> <a href=”#”>Shode Miracle</a> - Pet Care All rights reserved.</p>
+    </section>
+    <script src="https://kit.fontawesome.com/cb8535f973.js" crossorigin="anonymous"></script>
+    <script src="./js/script.js"></script>
+   <script> window.chtlConfig = { chatbotId: "5358877347" } </script>
+<script async data-id="5358877347" id="chtl-script" type="text/javascript" src="https://chatling.ai/js/embed.js"></script>
+  <script>
+    // Modal control functions
+    function openModal(modalId) {
+      document.getElementById(modalId).style.display = 'block';
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = 'none';
+    }
+
+    // Edit user modal
+    function openEditUserModal(id, email, role) {
+      document.getElementById('edit-user-id').value = id;
+      document.getElementById('edit-user-email').value = email;
+      document.getElementById('edit-user-role').value = role;
+      openModal('edit-user-modal');
+    }
+
+    // Edit booking modal
+    function openEditBookingModal(id, status) {
+      document.getElementById('edit-booking-id').value = id;
+      document.getElementById('edit-booking-status').value = status;
+      openModal('edit-booking-modal');
+    }
+
+    // Delete functions
+    function deleteUser(userId) {
+      if (confirm('Are you sure you want to delete this user?')) {
+        fetch(`/admin/users/delete/${userId}`, { method: 'POST' })
+          .then(response => {
+            if (response.ok) location.reload();
+            else alert('Failed to delete user');
+          });
+      }
+    }
+
+    function deletePet(petId) {
+      if (confirm('Are you sure you want to delete this pet?')) {
+        fetch(`/admin/pets/delete/${petId}`, { method: 'POST' })
+          .then(response => {
+            if (response.ok) location.reload();
+            else alert('Failed to delete pet');
+          });
+      }
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+      if (event.target.classList.contains('modal')) {
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+          modal.style.display = 'none';
+        });
+      }
+    }
+    
+    // Close modals with ESC key
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+          modal.style.display = 'none';
+        });
+      }
+    });
+  </script>
+</body>
+</html>

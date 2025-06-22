@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Pets - PetCare</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="shortcut icon" href="/assets/Favicon.ico" type="image/jpeg">
+  <script src="https://kit.fontawesome.com/cb8535f973.js" crossorigin="anonymous"></script>
+  <style>
+    /* Modal and Pet Card Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: var(--white, #fff);
+      border-radius: .7rem;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      width: 90%;
+      max-width: 500px;
+      padding: 2rem;
+      position: relative;
+    }
+    .close-modal {
+      position: absolute;
+      top: 1rem;
+      right: 1.5rem;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--light-color, #666);
+    }
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: .5rem;
+      font-weight: 500;
+      color: var(--black, #1e1e1f);
+    }
+    .form-control {
+      width: 100%;
+      padding: .8rem;
+      border-radius: .5rem;
+      border: .1rem solid var(--light-color, #ddd);
+      font-size: 1rem;
+    }
+    .btn-submit {
+      background: var(--green, #008000);
+      color: var(--white, #fff);
+      border: none;
+      border-radius: .5rem;
+      padding: .8rem 1.5rem;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-submit:hover {
+      background: var(--orange, #c88407);
+    }
+    .pet-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+    }
+    .pet-card {
+      background: var(--white, #fff);
+      border-radius: .7rem;
+      box-shadow: .5rem .5rem 0 rgba(22, 160, 133, .12);
+      border: .2rem solid rgba(0,0,0,0.08);
+      padding: 2rem 1.5rem 1.5rem 1.5rem;
+      text-align: center;
+      position: relative;
+      transition: box-shadow 0.2s;
+    }
+    .pet-card:hover {
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .pet-image {
+      margin-bottom: 1rem;
+    }
+    .pet-image img {
+      width: 90px;
+      height: 90px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 3px solid var(--orange, #c88407);
+    }
+    .pet-image i {
+      font-size: 3.5rem;
+      color: var(--orange, #c88407);
+      background: #f3e8d9;
+      border-radius: 50%;
+      padding: 1.2rem;
+    }
+    .no-pets {
+      background: var(--white, #fff);
+      border-radius: .7rem;
+      box-shadow: .5rem .5rem 0 rgba(22, 160, 133, .12);
+      border: .2rem solid rgba(0,0,0,0.08);
+      padding: 3rem 2rem;
+      text-align: center;
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <a href="/dashboard/user" class="logo"><i class="fa-solid fa-paw"></i>Pet<span>Care</span></a>
+    <nav class="navbar">
+      <a href="/dashboard/user">Dashboard</a>
+      <a href="/user/services">Services</a>
+      <a href="/user/bookings">Bookings</a>
+      <a href="/user/pets" class="active">My Pets</a>
+      <a href="/user/notifications">Notifications</a>
+      <a href="/auth/logout">Logout</a>
+    </nav>
+    <i id="menu-btn" class="fas fa-bars"></i>
+  </header>
+  
+  <% if (error) { %>
+    <div style="color: #fff; background: #e74c3c; padding: 10px; border-radius: 5px; margin-bottom: 20px; text-align: center;">
+      <%= error %>
+    </div>
+  <% } %>
+
+  <section style="padding: 3rem 0; background: #f8f9fa; min-height: 80vh;">
+    <div style="max-width: 900px; margin: 0 auto;">
+      <h2 style="color: var(--orange, #c88407); text-shadow: .4rem .4rem 0 rgba(0, 0, 0, .1); font-size: 2.5rem; margin-bottom: 2rem; letter-spacing: .1rem; font-weight: bold; text-transform: uppercase; text-align: center;">My Pets</h2>
+
+      <!-- Add Pet Button -->
+      <div style="text-align: right; margin-bottom: 2rem;">
+        <button id="openAddPetModal" style="background: var(--green, #008000); color: var(--white, #fff); padding: 0.7rem 1.5rem; border-radius: .5rem; font-size: 1.1rem; font-weight: bold; text-decoration: none; box-shadow: .2rem .2rem 0 rgba(0,0,0,0.07); transition: background 0.2s; border: none; cursor: pointer;" onmouseover="this.style.background='var(--orange, #c88407)'" onmouseout="this.style.background='var(--green, #008000)'">
+          <i class="fa-solid fa-plus"></i> Add Your Pet
+        </button>
+      </div>
+
+      <!-- Pets List -->
+      <% if (pets && pets.length > 0) { %>
+        <div class="pet-grid">
+          <% pets.forEach(function(pet) { %>
+            <div class="pet-card">
+              <!-- Pet Image or Placeholder -->
+              <div class="pet-image">
+                <% if (pet.image_url) { %>
+                  <img src="<%= pet.image_url %>" alt="<%= pet.name %>" />
+                <% } else { %>
+                  <i class="fa-solid fa-dog"></i>
+                <% } %>
+              </div>
+              <h3 style="font-size: 1.4rem; color: var(--black, #1e1e1f); margin-bottom: .5rem;"><%= pet.name %></h3>
+              <p style="color: var(--light-color, #666); font-size: 1.1rem; margin-bottom: .2rem;">
+                <strong>Species:</strong> <%= pet.species %>
+              </p>
+              <p style="color: var(--light-color, #666); font-size: 1.1rem; margin-bottom: .2rem;">
+                <strong>Breed:</strong> <%= pet.breed || 'Unknown' %>
+              </p>
+              <p style="color: var(--light-color, #666); font-size: 1.1rem;">
+                <strong>Age:</strong> <%= pet.age ? pet.age + ' years' : 'N/A' %>
+              </p>
+              <!-- Edit/Update Section -->
+              <div style="margin-top: 1.2rem;">
+                <button class="openEditPetModal" data-pet-id="<%= pet.id %>" style="background: var(--orange, #c88407); color: var(--white, #fff); padding: 0.4rem 1.2rem; border-radius: .3rem; font-size: 1rem; font-weight: bold; text-decoration: none; margin-right: .6rem; transition: background 0.2s; border: none; cursor: pointer;" onmouseover="this.style.background='var(--green, #008000)'" onmouseout="this.style.background='var(--orange, #c88407)'">
+                  <i class="fa-solid fa-pen"></i> Edit
+                </button>
+                <button class="openUpdateImageModal" data-pet-id="<%= pet.id %>" data-pet-name="<%= pet.name %>" style="background: #4e6ef5; color: var(--white, #fff); padding: 0.4rem 1.2rem; border-radius: .3rem; font-size: 1rem; font-weight: bold; text-decoration: none; border: none; transition: background 0.2s; cursor: pointer;" onmouseover="this.style.background='var(--orange, #c88407)'" onmouseout="this.style.background='#4e6ef5'">
+                  <i class="fa-solid fa-image"></i> Update Image
+                </button>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <div class="no-pets">
+          <i class="fa-solid fa-dog" style="font-size: 3.5rem; color: var(--orange, #c88407); background: #f3e8d9; border-radius: 50%; padding: 1.2rem;"></i>
+          <h3 style="font-size: 1.4rem; color: var(--black, #1e1e1f); margin: 1rem 0 .5rem 0;">No Pets Yet</h3>
+          <p style="color: var(--light-color, #666); font-size: 1.1rem;">
+            You have not added any pets. Click "Add Your Pet" to get started!
+          </p>
+        </div>
+      <% } %>
+    </div>
+  </section>
+
+  <!-- Modals -->
+  <!-- Add Pet Modal -->
+  <div id="addPetModal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal">&times;</span>
+      <h2 style="color: var(--orange, #c88407); text-align: center; margin-bottom: 1.5rem;">Add Your Pet</h2>
+      <form id="addPetForm" enctype="multipart/form-data">
+        <div class="form-group">
+          <label for="petName">Pet Name *</label>
+          <input type="text" id="petName" name="name" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label for="petSpecies">Species *</label>
+          <select id="petSpecies" name="species" class="form-control" required>
+            <option value="">Select Species</option>
+            <option value="Dog">Dog</option>
+            <option value="Cat">Cat</option>
+            <option value="Bird">Bird</option>
+            <option value="Fish">Fish</option>
+            <option value="Rabbit">Rabbit</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="petBreed">Breed</label>
+          <input type="text" id="petBreed" name="breed" class="form-control">
+        </div>
+        <div class="form-group">
+          <label for="petAge">Age (years)</label>
+          <input type="number" id="petAge" name="age" class="form-control" min="0" max="30">
+        </div>
+        <div class="form-group">
+          <label for="petImage">Pet Image</label>
+          <input type="file" id="petImage" name="image" class="form-control" accept="image/*">
+        </div>
+        <div style="text-align: center; margin-top: 1.5rem;">
+          <button type="submit" class="btn-submit">Add Pet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Pet Modal -->
+  <div id="editPetModal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" id="closeEditPetModal">&times;</span>
+      <h2 style="color: var(--orange, #c88407); text-align: center; margin-bottom: 1.5rem;">Edit Pet</h2>
+      <form id="editPetForm">
+        <input type="hidden" id="editPetId" name="petId">
+        <div class="form-group">
+          <label for="editPetName">Pet Name *</label>
+          <input type="text" id="editPetName" name="name" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label for="editPetSpecies">Species *</label>
+          <select id="editPetSpecies" name="species" class="form-control" required>
+            <option value="">Select Species</option>
+            <option value="Dog">Dog</option>
+            <option value="Cat">Cat</option>
+            <option value="Bird">Bird</option>
+            <option value="Fish">Fish</option>
+            <option value="Rabbit">Rabbit</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="editPetBreed">Breed</label>
+          <input type="text" id="editPetBreed" name="breed" class="form-control">
+        </div>
+        <div class="form-group">
+          <label for="editPetAge">Age (years)</label>
+          <input type="number" id="editPetAge" name="age" class="form-control" min="0" max="30">
+        </div>
+        <div style="text-align: center; margin-top: 1.5rem;">
+          <button type="submit" class="btn-submit">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Update Image Modal -->
+  <div id="updateImageModal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" id="closeUpdateImageModal">&times;</span>
+      <h2 style="color: var(--orange, #c88407); text-align: center; margin-bottom: 1.5rem;">Update Pet Image</h2>
+      <form id="updateImageForm" enctype="multipart/form-data">
+        <input type="hidden" id="updatePetId" name="petId">
+        <div class="form-group">
+          <label for="updatePetName">Pet Name</label>
+          <input type="text" id="updatePetName" class="form-control" readonly>
+        </div>
+        <div class="form-group">
+          <label for="newImage">Choose new pet image</label>
+          <input type="file" id="newImage" name="image" class="form-control" accept="image/*" required>
+        </div>
+        <div style="text-align: center; margin-top: 1.5rem;">
+          <button type="submit" class="btn-submit">Update Image</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <section class="footer">
+    <div class="footer-content">
+      <h3><i class="fa-solid fa-paw"></i>Pet<span>Care</span></h3>
+      <p>PetCare is a pet caring shop, where we provide facilities and various useful treatments.</p>
+      <ul class="socials">
+        <li><a href="#"><i class="fa fa-facebook"></i></a></li>
+        <li><a href="#"><i class="fa fa-twitter"></i></a></li>
+        <li><a href="#"><i class="fa-brands fa-instagram"></i></a></li>
+        <li><a href="#"><i class="fa fa-youtube"></i></a></li>
+      </ul>
+    </div>
+  </section>
+  <section class="footer-bottom">
+    <p>copyright &copy;<span id="currentYear"></span> PetCare. All rights reserved.</p>
+  </section>
+  
+  <script>
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
+    
+    // Modal functionality
+    const addPetModal = document.getElementById('addPetModal');
+    const editPetModal = document.getElementById('editPetModal');
+    const updateImageModal = document.getElementById('updateImageModal');
+    
+    // Add Pet Modal
+    document.getElementById('openAddPetModal').addEventListener('click', () => {
+      addPetModal.style.display = 'flex';
+    });
+    
+    // Edit Pet Modal
+    document.querySelectorAll('.openEditPetModal').forEach(btn => {
+      btn.addEventListener('click', async function() {
+        const petId = this.getAttribute('data-pet-id');
+        try {
+          const response = await fetch(`/user/pets/${petId}`);
+          if (response.ok) {
+            const pet = await response.json();
+            document.getElementById('editPetId').value = pet.id;
+            document.getElementById('editPetName').value = pet.name;
+            document.getElementById('editPetSpecies').value = pet.species;
+            document.getElementById('editPetBreed').value = pet.breed || '';
+            document.getElementById('editPetAge').value = pet.age || '';
+            editPetModal.style.display = 'flex';
+          }
+        } catch (err) {
+          alert('Failed to load pet data.');
+        }
+      });
+    });
+    
+    // Update Image Modal
+    document.querySelectorAll('.openUpdateImageModal').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const petId = this.getAttribute('data-pet-id');
+        const petName = this.getAttribute('data-pet-name');
+        document.getElementById('updatePetId').value = petId;
+        document.getElementById('updatePetName').value = petName;
+        updateImageModal.style.display = 'flex';
+      });
+    });
+    
+    // Close modals
+    document.querySelectorAll('.close-modal').forEach(btn => {
+      btn.addEventListener('click', function() {
+        addPetModal.style.display = 'none';
+        editPetModal.style.display = 'none';
+        updateImageModal.style.display = 'none';
+      });
+    });
+    
+    window.addEventListener('click', (e) => {
+      if (e.target === addPetModal) addPetModal.style.display = 'none';
+      if (e.target === editPetModal) editPetModal.style.display = 'none';
+      if (e.target === updateImageModal) updateImageModal.style.display = 'none';
+    });
+
+    // Form submissions
+    document.getElementById('addPetForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      
+      try {
+        const response = await fetch('/user/pets', {
+          method: 'POST',
+          body: formData
+        });
+        if (response.ok) {
+          window.location.reload();
+        } else {
+          alert('Failed to add pet. Please try again.');
+        }
+      } catch (err) {
+        alert('Error adding pet.');
+      }
+    });
+
+    document.getElementById('editPetForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const petId = document.getElementById('editPetId').value;
+      const formData = new URLSearchParams();
+      formData.append('name', document.getElementById('editPetName').value);
+      formData.append('species', document.getElementById('editPetSpecies').value);
+      formData.append('breed', document.getElementById('editPetBreed').value);
+      formData.append('age', document.getElementById('editPetAge').value);
+      
+      try {
+        const response = await fetch(`/user/pets/edit/${petId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formData.toString()
+        });
+        if (response.ok) {
+          window.location.reload();
+        } else {
+          alert('Failed to update pet.');
+        }
+      } catch (err) {
+        alert('Error updating pet.');
+      }
+    });
+
+    document.getElementById('updateImageForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const petId = document.getElementById('updatePetId').value;
+      const formData = new FormData(e.target);
+      
+      try {
+        const response = await fetch(`/user/pets/update-image/${petId}`, {
+          method: 'POST',
+          body: formData
+        });
+        if (response.ok) {
+          window.location.reload();
+        } else {
+          alert('Failed to update image.');
+        }
+      } catch (err) {
+        alert('Error updating image.');
+      }
+    });
+  </script>
+</body>
+</html>

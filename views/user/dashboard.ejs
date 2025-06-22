@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetCare User Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/services.css">
+    <link rel="stylesheet" href="/css/about.css">
+    <link rel="stylesheet" href="/css/dashboard.css"> 
+    <link rel="stylesheet" href="/css/style.css"><!-- New dashboard CSS -->
+    <link rel="shortcut icon" href="/assets/Favicon.ico" type="image/jpeg">
+    <script src="https://kit.fontawesome.com/cb8535f973.js" crossorigin="anonymous"></script>
+    
+</head>
+<body>
+    <header class="header">
+        <a href="/dashboard/user" class="logo"><i class="fa-solid fa-paw"></i>Pet<span>Care</span></a>
+        <nav class="navbar">
+            <a href="/dashboard/user" class="active">Dashboard</a>
+             <a href="/user/services">Services</a>
+            <a href="/user/bookings">Bookings</a>
+            <a href="/user/pets">My Pets</a>
+            <a href="/user/notifications">Notifications</a>
+            <a href="/auth/logout">Logout</a>
+        </nav>
+        <i id="menu-btn" class="fas fa-bars"></i>
+    </header>
+
+    <section class="dashboard">
+      <h1 class="heading">Welcome, <%= user ? (user.name || user.email) : "User" %>!</h1>
+
+        
+        <div class="dashboard-cards">
+            <div class="dashboard-card">
+                <i class="fa-solid fa-calendar-check"></i>
+                <h2>Total Bookings</h2>
+                <p><%= stats ? stats.totalBookings : 0 %></p>
+                 <a href="/user/book" class="btns">Book Now!</a></p>
+            </div>
+            
+            <div class="dashboard-card">
+                <i class="fa-solid fa-dog"></i>
+                <h2>Your Pets</h2>
+                <p><%= stats ? stats.totalPets : 0 %></p>
+                 <a href="/user/pets" class="btns">Add Pet!</a></p>
+            </div>
+            
+            <div class="dashboard-card">
+                <i class="fa-solid fa-bell"></i>
+                <h2>Notifications</h2>
+                <p><%= notifications ? notifications.length : 0 %></p>
+            </div>
+        </div>
+
+        <div class="dashboard-sections">
+            <!-- Upcoming Bookings Section -->
+            <section class="dashboard-section">
+                <div class="dashboard-section-header">
+                    <h2><i class="fa-solid fa-calendar-days"></i> Upcoming Bookings</h2>
+                    <a href="/user/bookings" class="btn">View All</a>
+                </div>
+                
+                <% if (stats && stats.upcomingBookings && stats.upcomingBookings.length > 0) { %>
+                    <table class="dashboard-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Service</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% stats.upcomingBookings.forEach(function(booking) { %>
+                                <tr>
+                                    <td><%= new Date(booking.appointment_date).toDateString() %></td>
+                                    <td><%= booking.appointment_time %></td>
+                                    <td><%= booking.service_name || 'General Service' %></td>
+                                    <td>
+                                        <span class="status-badge status-<%= booking.status.toLowerCase() %>">
+                                            <%= booking.status %>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                <% } else { %>
+                    <div class="empty-state">
+                        <i class="fa-solid fa-calendar-plus"></i>
+                        <p>No upcoming bookings. <br>
+                            <a href="/user/services" class="btns">Book a service now!</a></p>
+                    </div>
+                <% } %>
+            </section>
+
+            <!-- Notifications Section -->
+            <section class="dashboard-section">
+                <div class="dashboard-section-header">
+                    <h2><i class="fa-solid fa-bell"></i> Recent Notifications</h2>
+                    <a href="/user/notifications" class="btn">View All</a>
+                </div>
+                
+                <% if (notifications && notifications.length > 0) { %>
+                    <table class="dashboard-table">
+                        <thead>
+                            <tr>
+                                <th>Message</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% notifications.forEach(function(note) { %>
+                                <tr>
+                                    <td><%= note.message %></td>
+                                    <td><%= new Date(note.created_at).toLocaleDateString() %></td>
+                                    <td>
+                                        <% if (note.is_read) { %>
+                                            <span class="status-badge status-confirmed">Read</span>
+                                        <% } else { %>
+                                            <span class="status-badge status-pending">Unread</span>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                <% } else { %>
+                    <div class="empty-state">
+                        <i class="fa-solid fa-bell-slash"></i>
+                        <p>No new notifications</p>
+                    </div>
+                <% } %>
+            </section>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <section class="footer">
+        <div class="footer-content">
+            <h3><i class="fa-solid fa-paw"></i>Pet<span>Care</span></h3>
+            <p>Your trusted partner in pet care since 2023. We provide premium services to keep your pets happy and healthy.</p>
+            <ul class="socials">
+                <li><a href="#"><i class="fa fa-facebook"></i></a></li>
+                <li><a href="#"><i class="fa fa-twitter"></i></a></li>
+                <li><a href="#"><i class="fa-brands fa-instagram"></i></a></li>
+                <li><a href="#"><i class="fa fa-youtube"></i></a></li>
+            </ul>
+        </div>
+    </section>
+    <script src="/js/script.js"></script>
+    <script src="/js/dashboard.js"></script>
+    <script>
+  // Prevent infinite refresh loop
+  if (window.location.search.includes('redirected')) {
+    history.replaceState(null, '', '/dashboard/user');
+  }
+</script>
+
+    <section class="footer-bottom">
+        <p>Copyright &copy; <span id="currentYear"></span> PetCare. All rights reserved.</p>
+    </section>
+</body>
+</html>

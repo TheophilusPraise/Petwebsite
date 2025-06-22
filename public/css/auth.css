@@ -1,0 +1,110 @@
+:root {
+    --green: rgb(0, 128, 0);
+    --orange: rgb(200, 132, 7);
+    --black: #1e1e1f;
+    --white: rgb(255, 255, 255);
+    --light-color: #666;
+    --box-shadow: .5rem .5rem 0 rgba(22, 160, 133, .2);
+    --border: .2rem solid rgba(0,0,0,1);
+    --text-shadow: .4rem .4rem 0 rgba(0, 0, 0, .2);
+    --outline: .1rem solid rgba(0,0,0,1);
+}
+
+/* Login Form Styles */
+.form.login-form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+    background: none;
+}
+
+.login-form-box {
+    background: var(--white);
+    border-radius: .5rem;
+    box-shadow: var(--box-shadow);
+    border: var(--border);
+    padding: 2.5rem 2rem 2rem 2rem;
+    width: 100%;
+    max-width: 420px;
+    margin: 2rem auto;
+    text-align: center;
+}
+
+.login-heading {
+    color: var(--orange);
+    text-shadow: var(--text-shadow);
+    font-size: 2.2rem;
+    margin-bottom: 1.5rem;
+    letter-spacing: .1rem;
+    font-weight: bold;
+}
+
+.input-group {
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.input-group label {
+    color: var(--black);
+    font-size: 1.1rem;
+    margin-bottom: .5rem;
+    display: block;
+    font-weight: 500;
+}
+
+.input-group .box {
+    width: 100%;
+    padding: 1rem;
+    border-radius: .5rem;
+    border: var(--border);
+    font-size: 1.1rem;
+    color: var(--black);
+    margin-top: .3rem;
+}
+
+.btn-auth {
+    background: var(--orange);
+    color: var(--white);
+    border: none;
+    border-radius: .5rem;
+    padding: .9rem 2.5rem;
+    font-size: 1.2rem;
+    font-weight: bold;
+    box-shadow: var(--box-shadow);
+    cursor: pointer;
+    margin-bottom: 1.2rem;
+    transition: background 0.2s;
+}
+
+.btn-auth:hover {
+    background: var(--green);
+}
+
+.login-links {
+    margin-top: 1.5rem;
+    text-align: center;
+    font-size: 1rem;
+}
+
+.login-links a {
+    color: var(--orange);
+    text-decoration: underline;
+    margin: 0 .7rem;
+    transition: color 0.2s;
+}
+
+.login-links a:last-child {
+    color: var(--green);
+}
+
+.error {
+    color: #fff;
+    background: #e74c3c;
+    padding: .7rem 1rem;
+    border-radius: .5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(200,0,0,0.08);
+}
