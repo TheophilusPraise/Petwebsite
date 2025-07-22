@@ -119,6 +119,7 @@
     <nav class="navbar">
       <a href="/dashboard/user">Dashboard</a>
       <a href="/user/services">Services</a>
+      <a href="/pricing">Pricing</a>
       <a href="/user/bookings">Bookings</a>
       <a href="/user/pets" class="active">My Pets</a>
       <a href="/user/notifications">Notifications</a>
@@ -137,19 +138,16 @@
     <div style="max-width: 900px; margin: 0 auto;">
       <h2 style="color: var(--orange, #c88407); text-shadow: .4rem .4rem 0 rgba(0, 0, 0, .1); font-size: 2.5rem; margin-bottom: 2rem; letter-spacing: .1rem; font-weight: bold; text-transform: uppercase; text-align: center;">My Pets</h2>
 
-      <!-- Add Pet Button -->
       <div style="text-align: right; margin-bottom: 2rem;">
         <button id="openAddPetModal" style="background: var(--green, #008000); color: var(--white, #fff); padding: 0.7rem 1.5rem; border-radius: .5rem; font-size: 1.1rem; font-weight: bold; text-decoration: none; box-shadow: .2rem .2rem 0 rgba(0,0,0,0.07); transition: background 0.2s; border: none; cursor: pointer;" onmouseover="this.style.background='var(--orange, #c88407)'" onmouseout="this.style.background='var(--green, #008000)'">
           <i class="fa-solid fa-plus"></i> Add Your Pet
         </button>
       </div>
 
-      <!-- Pets List -->
       <% if (pets && pets.length > 0) { %>
         <div class="pet-grid">
           <% pets.forEach(function(pet) { %>
             <div class="pet-card">
-              <!-- Pet Image or Placeholder -->
               <div class="pet-image">
                 <% if (pet.image_url) { %>
                   <img src="<%= pet.image_url %>" alt="<%= pet.name %>" />
@@ -167,13 +165,15 @@
               <p style="color: var(--light-color, #666); font-size: 1.1rem;">
                 <strong>Age:</strong> <%= pet.age ? pet.age + ' years' : 'N/A' %>
               </p>
-              <!-- Edit/Update Section -->
               <div style="margin-top: 1.2rem;">
                 <button class="openEditPetModal" data-pet-id="<%= pet.id %>" style="background: var(--orange, #c88407); color: var(--white, #fff); padding: 0.4rem 1.2rem; border-radius: .3rem; font-size: 1rem; font-weight: bold; text-decoration: none; margin-right: .6rem; transition: background 0.2s; border: none; cursor: pointer;" onmouseover="this.style.background='var(--green, #008000)'" onmouseout="this.style.background='var(--orange, #c88407)'">
                   <i class="fa-solid fa-pen"></i> Edit
                 </button>
                 <button class="openUpdateImageModal" data-pet-id="<%= pet.id %>" data-pet-name="<%= pet.name %>" style="background: #4e6ef5; color: var(--white, #fff); padding: 0.4rem 1.2rem; border-radius: .3rem; font-size: 1rem; font-weight: bold; text-decoration: none; border: none; transition: background 0.2s; cursor: pointer;" onmouseover="this.style.background='var(--orange, #c88407)'" onmouseout="this.style.background='#4e6ef5'">
                   <i class="fa-solid fa-image"></i> Update Image
+                </button>
+                <button class="openReminderModal" data-pet-id="<%= pet.id %>" data-pet-name="<%= pet.name %>" style="background: #34a853; color: #fff; padding: 0.4rem 1.2rem; border-radius: .3rem; font-size: 1rem; font-weight: bold; text-decoration: none; border: none; transition: background 0.2s; cursor: pointer; margin-top: .4rem;" onmouseover="this.style.background='var(--orange, #c88407)'" onmouseout="this.style.background='#34a853'">
+                  <i class="fa-solid fa-bell"></i> Set Reminder
                 </button>
               </div>
             </div>
@@ -191,8 +191,7 @@
     </div>
   </section>
 
-  <!-- Modals -->
-  <!-- Add Pet Modal -->
+  <!-- Modals (Add Pet, Edit Pet, Update Image, Reminder) -->
   <div id="addPetModal" class="modal">
     <div class="modal-content">
       <span class="close-modal">&times;</span>
@@ -233,7 +232,6 @@
     </div>
   </div>
 
-  <!-- Edit Pet Modal -->
   <div id="editPetModal" class="modal">
     <div class="modal-content">
       <span class="close-modal" id="closeEditPetModal">&times;</span>
@@ -271,7 +269,6 @@
     </div>
   </div>
 
-  <!-- Update Image Modal -->
   <div id="updateImageModal" class="modal">
     <div class="modal-content">
       <span class="close-modal" id="closeUpdateImageModal">&times;</span>
@@ -288,6 +285,37 @@
         </div>
         <div style="text-align: center; margin-top: 1.5rem;">
           <button type="submit" class="btn-submit">Update Image</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="reminderModal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" id="closeReminderModal">&times;</span>
+      <h2 style="color: var(--orange, #c88407); text-align: center; margin-bottom: 1.5rem;">
+        Set Reminder
+      </h2>
+      <form id="reminderForm">
+        <input type="hidden" id="reminderPetId" name="petId">
+        <div class="form-group">
+          <label for="reminderPetName">Pet Name</label>
+          <input type="text" id="reminderPetName" class="form-control" readonly>
+        </div>
+        <div class="form-group">
+          <label for="reminderDescription">What do you want to be reminded about?</label>
+          <input type="text" id="reminderDescription" name="description" class="form-control" placeholder="e.g. Walk, Feed, Medicine" required>
+        </div>
+        <div class="form-group">
+          <label for="reminderTime">Set Time</label>
+          <input type="datetime-local" id="reminderTime" name="time" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label for="reminderEmail">Email Reminder</label>
+          <input type="checkbox" id="reminderEmail" name="email" checked>
+        </div>
+        <div style="text-align: center; margin-top: 1.5rem;">
+          <button type="submit" class="btn-submit">Set Reminder</button>
         </div>
       </form>
     </div>
@@ -317,6 +345,7 @@
     const addPetModal = document.getElementById('addPetModal');
     const editPetModal = document.getElementById('editPetModal');
     const updateImageModal = document.getElementById('updateImageModal');
+    const reminderModal = document.getElementById('reminderModal');
     
     // Add Pet Modal
     document.getElementById('openAddPetModal').addEventListener('click', () => {
@@ -354,13 +383,27 @@
         updateImageModal.style.display = 'flex';
       });
     });
-    
+
+
+    // Reminder Modal (open)
+    document.querySelectorAll('.openReminderModal').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const petId = this.getAttribute('data-pet-id');
+        const petName = this.getAttribute('data-pet-name');
+        document.getElementById('reminderPetId').value = petId;
+        document.getElementById('reminderPetName').value = petName;
+        reminderModal.style.display = 'flex';
+      });
+    });
+
+
     // Close modals
     document.querySelectorAll('.close-modal').forEach(btn => {
       btn.addEventListener('click', function() {
         addPetModal.style.display = 'none';
         editPetModal.style.display = 'none';
         updateImageModal.style.display = 'none';
+        reminderModal.style.display = 'none';
       });
     });
     
@@ -368,7 +411,9 @@
       if (e.target === addPetModal) addPetModal.style.display = 'none';
       if (e.target === editPetModal) editPetModal.style.display = 'none';
       if (e.target === updateImageModal) updateImageModal.style.display = 'none';
+      if (e.target === reminderModal) reminderModal.style.display = 'none';
     });
+
 
     // Form submissions
     document.getElementById('addPetForm').addEventListener('submit', async (e) => {
@@ -389,6 +434,7 @@
         alert('Error adding pet.');
       }
     });
+
 
     document.getElementById('editPetForm').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -415,6 +461,7 @@
       }
     });
 
+
     document.getElementById('updateImageForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const petId = document.getElementById('updatePetId').value;
@@ -432,6 +479,32 @@
         }
       } catch (err) {
         alert('Error updating image.');
+      }
+    });
+
+
+    // Reminder form submit
+    document.getElementById('reminderForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const petId = document.getElementById('reminderPetId').value;
+      const description = document.getElementById('reminderDescription').value;
+      const time = document.getElementById('reminderTime').value;
+      const sendEmail = document.getElementById('reminderEmail').checked;
+
+      try {
+        const response = await fetch(`/user/pets/set-reminder/${petId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ description, time, sendEmail })
+        });
+        if (response.ok) {
+          alert('Reminder set successfully!');
+          reminderModal.style.display = 'none';
+        } else {
+          alert('Failed to set reminder.');
+        }
+      } catch (err) {
+        alert('Error setting reminder.');
       }
     });
   </script>

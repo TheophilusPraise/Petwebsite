@@ -1,10 +1,8 @@
 import dotenv from 'dotenv';
 dotenv.config({ path: '.env' });
-
-// Debug logs
-console.log('DB_USER:', process.env.DB_USER);
-console.log('DB_NAME:', process.env.DB_NAME);
-
+import nodemailer from 'nodemailer';
+import { sendSmsWithSendchamp, sendWhatsappWithSendchamp } from './services/sendchampNotifier.js';
+import cron from 'node-cron';
 import express from 'express';
 import session from 'express-session';
 import flash from 'connect-flash';
@@ -14,29 +12,24 @@ import http from 'http';
 import { Server } from 'socket.io';
 import { createRequire } from 'module';
 import fs from 'fs';
-import pool from './config/db.js'; // Import your pool instance
-// Create require function
+import pool from './config/db.js';
+
 const require = createRequire(import.meta.url);
 
-// Create uploads directory if not exists
 const uploadsDir = 'public/uploads';
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Load MySQL session store
 const MySQLStore = require('express-mysql-session')(session);
 
-// Create app and server
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Create __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// MySQL Session Store Configuration
 const sessionStore = new MySQLStore({
   host: process.env.DB_HOST || 'localhost',
   port: process.env.DB_PORT || 3306,
@@ -54,12 +47,11 @@ const sessionStore = new MySQLStore({
   }
 });
 
-// Middleware
-app.use(express.urlencoded({ extended: true })); // Parse form data
-app.use(express.json()); // Parse JSON bodies
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.set('trust proxy', 1); // Must come before session
+app.set('trust proxy', 1);
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', '*');
@@ -67,7 +59,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Session Middleware
 app.use(session({
   key: 'petcare.sid',
   secret: process.env.SESSION_SECRET,
@@ -75,14 +66,13 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false, // Must be false for HTTP
+    secure: false,
     httpOnly: true,
     sameSite: 'lax',
     maxAge: 24 * 60 * 60 * 1000
   }
 }));
 
-// Session save-redirect middleware
 app.use((req, res, next) => {
   const oldRedirect = res.redirect;
   res.redirect = function (...args) {
@@ -96,9 +86,8 @@ app.use((req, res, next) => {
 });
 app.use('/admin', adminRoutes);
 
-app.use(flash()); // Must come AFTER session
+app.use(flash());
 
-// Set EJS as the view engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
@@ -107,31 +96,19 @@ import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
-// At the top with other imports
 import pricingRoutes from './routes/pricingRoutes.js';
 
-// After other route declarations
 app.use('/', pricingRoutes);
 
-// Database connection
 import './models/db.js';
 
-// Apply routes
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
 app.use('/user', userRoutes);
 app.use('/dashboard', dashboardRoutes);
 
-// Add this function
-// At the top of app.js
-
-
-// ... (other imports and config)
-
-// After database connection
 async function initializeAdmin() {
   try {
-    // 1. Create admins table if not exists
     await pool.query(`
       CREATE TABLE IF NOT EXISTS admins (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -140,48 +117,39 @@ async function initializeAdmin() {
         otp_expiry DATETIME
       )
     `);
-    
-    // 2. Insert admin email if not exists
+
     await pool.query(`
       INSERT IGNORE INTO admins (email) 
       VALUES ('codefernocompany@gmail.com')
     `);
-    
+
     console.log('Admin setup completed');
   } catch (err) {
     console.error('Admin setup error:', err);
   }
 }
 
-// Call after database connection is established
 initializeAdmin();
 
-// Home Route
 app.get('/', (req, res) => {
-    res.render('index', { user: req.session.user });
+  res.render('index', { user: req.session.user });
 });
-
-// Additional routes
 app.get('/index', (req, res) => res.render('index'));
 app.get('/about', (req, res) => res.render('about'));
 app.get('/contact', (req, res) => res.render('contact'));
-
-
 app.get('/services', (req, res) => res.render('services'));
 app.get('/book', (req, res) => {
   res.render('user/book', { service: req.query.service || '' });
 });
 
-// Socket.io notifications
 io.on('connection', (socket) => {
-    console.log('User connected:', socket.id);
-    
-    socket.on('disconnect', () => {
-        console.log('User disconnected:', socket.id);
-    });
+  console.log('User connected:', socket.id);
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+  });
 });
 
-// Debug middleware
 app.use((req, res, next) => {
   console.log('--- NEW REQUEST ---');
   console.log('URL:', req.url);
@@ -191,16 +159,105 @@ app.use((req, res, next) => {
 
 app.post('/contact', async (req, res) => {
   const { name, email, message } = req.body;
-  // ... send email ...
   await notifyAdmin('Contact Form Submission', `From: ${name} (${email})\nMessage: ${message}`);
   res.redirect('/contact?success=1');
 });
 
-// Server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
 
+// ------------ REMINDER SYSTEM SECTION ------------------
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+app.post('/user/pets/set-reminder/:petId', async (req, res) => {
+  try {
+    if (!req.session.user) return res.status(401).json({ error: "Unauthorized" });
+    const user_id = req.session.user.id;
+    const pet_id = req.params.petId;
+    const { description, time, sendEmail, sendSMS, sendWhatsApp, phone } = req.body;
+
+    if (!description || !time)
+      return res.status(400).json({ error: 'Missing info' });
+    if ((sendSMS || sendWhatsApp) && !phone)
+      return res.status(400).json({ error: 'Phone required for SMS/WhatsApp reminder' });
+
+    await pool.query(
+      `INSERT INTO reminders (user_id, pet_id, description, remind_at, send_email, send_sms, send_whatsapp, sms_phone)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [user_id, pet_id, description, time, sendEmail ? 1 : 0, sendSMS ? 1 : 0, sendWhatsApp ? 1 : 0, (sendSMS || sendWhatsApp) ? phone : null]
+    );
+    res.status(200).json({ message: 'Reminder scheduled!' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to set reminder' });
+  }
+});
+
+app.get('/user/pets/:petId', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM pets WHERE id = ?', [req.params.petId]);
+    if (!rows.length) return res.status(404).json({ error: 'Pet not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch pet' });
+  }
+});
+
+// Async, non-blocking cron job for reminders
+cron.schedule('* * * * *', async () => {
+  try {
+    const [reminders] = await pool.query(
+      `SELECT r.*, u.email as user_email
+       FROM reminders r
+       JOIN users u ON r.user_id = u.id
+       WHERE r.status='pending' AND r.remind_at <= NOW()`
+    );
+    // Process up to e.g. 50 reminders per tick to avoid blocking
+    for (const r of reminders.slice(0, 50)) {
+      try {
+        // Email
+        if (r.send_email && r.user_email) {
+          await transporter.sendMail({
+            from: process.env.SITE_EMAIL,
+            to: r.user_email,
+            subject: `PetCare: Reminder for your pet`,
+            text: `Hi! This is your reminder: "${r.description}" for your pet at ${r.remind_at}.`
+          });
+        }
+        // SMS
+        if (r.send_sms && r.sms_phone) {
+          const phone = r.sms_phone.startsWith('+') ? r.sms_phone.slice(1) : r.sms_phone;
+          await sendSmsWithSendchamp(phone, `PetCare: ${r.description} for your pet at ${r.remind_at}`);
+        }
+        // WhatsApp
+        if (r.send_whatsapp && r.sms_phone) {
+          const phone = r.sms_phone.startsWith('+') ? r.sms_phone.slice(1) : r.sms_phone;
+          await sendWhatsappWithSendchamp(phone, `PetCare WhatsApp: ${r.description} for your pet at ${r.remind_at}`);
+        }
+        // Mark as sent
+        await pool.query('UPDATE reminders SET status="sent" WHERE id=?', [r.id]);
+      } catch (remindErr) {
+        // Log, but continue with next reminder
+        console.error('[Reminder Cron Error - Single Reminder]', remindErr);
+      }
+    }
+    if (reminders.length) {
+      console.log(`[Reminders] Processed ${reminders.length} reminders`);
+    }
+  } catch (err) {
+    console.error('[Reminders Cron Error]', err);
+  }
+});
+
+// ------------ END OF REMINDER SYSTEM SECTION ------------------
 // Export app for testing
 export default app;

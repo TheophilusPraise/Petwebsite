@@ -62,7 +62,7 @@
           box-shadow: 0 2px 6px rgba(200,0,0,0.08);
         "><%= error %></div>
       <% } %>
-      <div style="margin-bottom: 1.5rem; text-align: left;">
+      <div style="margin-bottom: 1.2rem; text-align: left;">
         <label for="email" style="
           color: var(--black);
           font-size: 1.1rem;
@@ -70,7 +70,7 @@
           display: block;
           font-weight: 500;
         ">Email:</label>
-        <input type="email" name="email" id="email" required style="
+        <input type="email" name="email" id="email" required placeholder="Enter your email" style="
           width: 100%;
           padding: 1rem;
           border-radius: .5rem;
@@ -80,6 +80,26 @@
           margin-top: .3rem;
           font-family: inherit;
         ">
+      </div>
+      <div style="margin-bottom: 1.2rem; text-align: left;">
+        <label for="phone" style="
+          color: var(--black);
+          font-size: 1.1rem;
+          margin-bottom: .5rem;
+          display: block;
+          font-weight: 500;
+        ">Phone Number:</label>
+        <input type="text" name="phone" id="phone" required placeholder="e.g. 2348012345678" style="
+          width: 100%;
+          padding: 1rem;
+          border-radius: .5rem;
+          border: .2rem solid rgba(0,0,0,1);
+          font-size: 1.1rem;
+          color: var(--black);
+          margin-top: .3rem;
+          font-family: inherit;
+        ">
+        <small style="color: #888;">Use international format (e.g. 234801234xxxx)</small>
       </div>
       <button type="submit" style="
         background: var(--orange);

@@ -3,191 +3,237 @@ import bcrypt from 'bcryptjs';
 import pool from '../config/db.js';
 import { notifyAdmin } from '../utils/emailService.js';
 import { sendOTPEmail } from '../utils/mailer.js';
-import { createUser, findUserByEmail, updatePassword } from '../models/userModel.js';
-import { createOTP, findValidOTP, markOTPUsed } from '../models/otpModel.js';
+import {
+  createUser,
+  findUserByEmail,
+  findUserByPhone,
+  findUserByContact,
+  updatePassword
+} from '../models/userModel.js';
+import {
+  createOTP,
+  findValidOTP,
+  markOTPUsed
+} from '../models/otpModel.js';
 
 const generateOTP = () => crypto.randomInt(100000, 999999).toString();
 
-// Show registration page
+
+// --- REGISTRATION ---
 export const showRegister = (req, res) => {
-  res.render('auth/register', { error: undefined, email: '' });
+  res.render('auth/register', { error: undefined, email: '', phone: '' });
 };
 
-// Handle registration form
+
 export const processRegister = async (req, res) => {
   try {
-    const { email } = req.body;
-    const user = await findUserByEmail(email);
-    if (user) {
-      return res.render('auth/register', { error: 'Email already registered', email });
-    }
-    
-    await createUser(email, 'user');
+    const { email, phone } = req.body;
+    if (!email || !phone)
+      return res.render('auth/register', {
+        error: "Both email and phone are required.",
+        email,
+        phone
+      });
+
+
+    if (await findUserByEmail(email))
+      return res.render('auth/register', { error: 'Email already registered', email, phone });
+
+
+    if (await findUserByPhone(phone))
+      return res.render('auth/register', { error: 'Phone already registered', email, phone });
+
+
+    const userId = await createUser(email, phone, 'user');
     const otp = generateOTP();
-    
-    console.log(`Sending OTP ${otp} to ${email} for registration`);
-    await sendOTPEmail(email, otp);
-    
-    res.render('auth/verify-code', { email, purpose: 'register' });
+    await createOTP(userId, otp, 'register');
+
+
+    // Only send OTP via email (no SMS or WhatsApp)
+    await Promise.allSettled([
+      sendOTPEmail(email, otp),
+    ]);
+
+
+    res.render('auth/verify-code', { contact: email, phone, purpose: 'register' });
   } catch (error) {
     console.error('Registration Error:', error);
-    res.render('auth/register', { error: 'Server error', email: req.body?.email || '' });
-  }
-};
-
-// Show login page
-export const showLogin = (req, res) => {
-  res.render('auth/login', { error: undefined, email: '' });
-};
-
-// Handle login form
-export const processLogin = async (req, res) => {
-  try {
-    const { email } = req.body;
-    const user = await findUserByEmail(email);
-    if (!user) {
-      return res.render('auth/login', { error: 'Email not registered', email });
-    }
-    
-    const otp = generateOTP();
-    await createOTP(user.id, otp, 'login');
-    
-    console.log(`Sending OTP ${otp} to ${email} for login`);
-    await sendOTPEmail(email, otp);
-    
-    res.render('auth/verify-code', { email, purpose: 'login' });
-  } catch (error) {
-    console.error('Login Error:', error);
-    res.render('auth/login', { error: 'Server error', email: req.body?.email || '' });
-  }
-};
-
-// Show password reset request page
-export const showResetPassword = (req, res) => {
-  res.render('auth/reset-password', { error: undefined, email: '' });
-};
-
-// Handle password reset request
-export const processResetPassword = async (req, res) => {
-  try {
-    const { email } = req.body;
-    const user = await findUserByEmail(email);
-    if (!user) {
-      return res.render('auth/reset-password', { error: 'Email not registered', email });
-    }
-    
-    const otp = generateOTP();
-    await createOTP(user.id, otp, 'reset');
-    
-    console.log(`Sending OTP ${otp} to ${email} for password reset`);
-    await sendOTPEmail(email, otp);
-    
-    res.render('auth/verify-code', { email, purpose: 'reset' });
-  } catch (error) {
-    console.error('Password Reset Error:', error);
-    res.render('auth/reset-password', { error: 'Server error', email: req.body?.email || '' });
-  }
-};
-
-// Show new password form after successful OTP verification
-export const showResetPasswordNew = (req, res) => {
-  const { email } = req.query;
-  res.render('auth/reset-password-new', { email, error: undefined });
-};
-
-// Handle new password submission
-export const processResetPasswordNew = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
-    await updatePassword(email, hashedPassword);
-    res.render('auth/reset-password-result', { success: 'Password updated successfully' });
-  } catch (error) {
-    console.error('Password Update Error:', error);
-    res.render('auth/reset-password-new', { email: req.body.email, error: 'Failed to update password' });
-  }
-};
-export const verifyCode = async (req, res) => {
-  try {
-    const { email, code, purpose } = req.body;
-    const user = await findUserByEmail(email);
-    
-    if (!user) {
-      return res.render('auth/verify-code', { 
-        email, 
-        purpose, 
-        error: 'Invalid session' 
-      });
-    }
-    
-    const otpRecord = await findValidOTP(user.id, code, purpose);
-    if (!otpRecord) {
-      return res.render('auth/verify-code', { 
-        email, 
-        purpose, 
-        error: 'Invalid or expired code' 
-      });
-    }
-    
-    await markOTPUsed(otpRecord.id);
-
-    // Fetch complete user data including role using pool
-    const [userData] = await pool.query(
-      'SELECT id, email, role FROM users WHERE id = ?', 
-      [user.id]
-    );
-    
-    if (!userData.length) {
-      return res.render('auth/verify-code', { 
-        email, 
-        purpose, 
-        error: 'User not found' 
-      });
-    }
-
-    const fullUser = userData[0];
-    
-    // Set session with role
-    req.session.user = {
-      id: fullUser.id,
-      email: fullUser.email,
-      role: fullUser.role
-    };
-    
-    console.log('Session set after OTP:', req.session.user);
-    console.log('Authenticated user:', fullUser.email);
-    
-    // Redirect based on role
-    if (fullUser.role === 'admin') {
-      return res.redirect('/admin/dashboard');
-    } else {
-      return res.redirect('/dashboard/user');
-    }
-    
-  } catch (error) {
-    console.error('OTP Verification Error:', error);
-    res.render('auth/verify-code', { 
-      email: req.body.email, 
-      purpose: req.body.purpose, 
-      error: 'Verification failed' 
+    res.render('auth/register', {
+      error: 'Server error',
+      email: req.body?.email,
+      phone: req.body?.phone
     });
   }
 };
 
 
+// --- LOGIN ---
+export const showLogin = (req, res) => {
+  res.render('auth/login', { error: undefined, contact: '' });
+};
+
+
+export const processLogin = async (req, res) => {
+  try {
+    const { contact } = req.body;
+    let user;
+    if (contact.includes('@')) {
+      user = await findUserByEmail(contact);
+    } else {
+      user = await findUserByPhone(contact);
+    }
+    if (!user)
+      return res.render('auth/login', { error: 'No account with that email or phone', contact });
+
+
+    const otp = generateOTP();
+    await createOTP(user.id, otp, 'login');
+
+
+    const tasks = [];
+    if (user.email) tasks.push(sendOTPEmail(user.email, otp));
+    // No WhatsApp or SMS calls here
+    await Promise.allSettled(tasks);
+
+
+    res.render('auth/verify-code', {
+      contact,
+      email: user.email,
+      phone: user.phone,
+      purpose: 'login'
+    });
+  } catch (error) {
+    console.error('Login Error:', error);
+    res.render('auth/login', { error: 'Server error', contact: req.body?.contact || '' });
+  }
+};
+
+
+// --- PASSWORD RESET ---
+export const showResetPassword = (req, res) => {
+  res.render('auth/reset-password', { error: undefined, contact: '' });
+};
+
+
+export const processResetPassword = async (req, res) => {
+  try {
+    const { contact } = req.body;
+    let user;
+    if (contact.includes('@')) {
+      user = await findUserByEmail(contact);
+    } else {
+      user = await findUserByPhone(contact);
+    }
+    if (!user)
+      return res.render('auth/reset-password', { error: 'Account not found', contact });
+
+
+    const otp = generateOTP();
+    await createOTP(user.id, otp, 'reset');
+
+
+    const tasks = [];
+    if (user.email) tasks.push(sendOTPEmail(user.email, otp));
+    // No WhatsApp or SMS calls here
+    await Promise.allSettled(tasks);
+
+
+    res.render('auth/verify-code', { contact, email: user.email, phone: user.phone, purpose: 'reset' });
+  } catch (error) {
+    console.error('Password Reset Error:', error);
+    res.render('auth/reset-password', { error: 'Server error', contact: req.body?.contact || '' });
+  }
+};
+
+
+// --- SET NEW PASSWORD AFTER OTP ---
+export const showResetPasswordNew = (req, res) => {
+  const { contact } = req.query;
+  res.render('auth/reset-password-new', { contact, error: undefined });
+};
+
+
+export const processResetPasswordNew = async (req, res) => {
+  try {
+    const { contact, password } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await updatePassword(contact, hashedPassword);
+    res.render('auth/reset-password-result', { success: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Password Update Error:', error);
+    res.render('auth/reset-password-new', {
+      contact: req.body.contact,
+      error: 'Failed to update password'
+    });
+  }
+};
+
+
+// --- OTP VERIFICATION ---
+export const verifyCode = async (req, res) => {
+  try {
+    const { contact, code, purpose } = req.body;
+    let user;
+    if (contact.includes('@')) {
+      user = await findUserByEmail(contact);
+    } else {
+      user = await findUserByPhone(contact);
+    }
+    if (!user)
+      return res.render('auth/verify-code', { contact, purpose, error: 'Invalid session' });
+
+
+    const otpRecord = await findValidOTP(user.id, code, purpose);
+    if (!otpRecord)
+      return res.render('auth/verify-code', { contact, purpose, error: 'Invalid or expired code' });
+
+
+    await markOTPUsed(otpRecord.id);
+
+
+    const [userData] = await pool.query('SELECT id, email, phone, role FROM users WHERE id = ?', [user.id]);
+    if (!userData.length)
+      return res.render('auth/verify-code', { contact, purpose, error: 'User not found' });
+    const fullUser = userData[0];
+
+
+    req.session.user = {
+      id: fullUser.id,
+      email: fullUser.email,
+      phone: fullUser.phone,
+      role: fullUser.role
+    };
+    if (fullUser.role === 'admin') {
+      return res.redirect('/admin/dashboard');
+    } else {
+      return res.redirect('/dashboard/user');
+    }
+  } catch (error) {
+    console.error('OTP Verification Error:', error);
+    res.render('auth/verify-code', {
+      contact: req.body.contact,
+      purpose: req.body.purpose,
+      error: 'Verification failed'
+    });
+  }
+};
+
+
+// --- LOGOUT ---
 export const logout = (req, res) => {
   req.session.destroy(err => {
-    res.clearCookie('petcare.sid'); // Match your session key
+    res.clearCookie('petcare.sid');
     res.redirect('/auth/login');
   });
 };
 
 
+// --- Notify Admin on Registration ---
 export const processARegister = async (req, res) => {
-  // ... after successful registration ...
-  await notifyAdmin('New User Registration', `New user registered: ${email}`);
+  await notifyAdmin('New User Registration', `New user registered: ${req.body.email || req.body.phone}`);
 };
-// Default export for routes
+
+
 export default {
   showRegister,
   processRegister,
@@ -198,6 +244,6 @@ export default {
   showResetPasswordNew,
   processResetPasswordNew,
   verifyCode,
-  processARegister ,
+  processARegister,
   logout
 };

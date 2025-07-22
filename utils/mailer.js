@@ -79,3 +79,30 @@ export const sendPasswordResetEmail = async (email, resetLink) => {
     console.error(`❌ Failed to send reset email to ${email}:`, err);
   }
 };
+// Broadcast to users
+export const broadcastToUsers = async (subject, message) => {
+  try {
+    const [users] = await pool.query('SELECT id, email FROM users');
+    if (!users.length) return;
+
+    for (const user of users) {
+      const html = getStyledTemplate(subject, message);
+
+      await sendEmail({
+        to: user.email,
+        subject,
+        text: message,
+        html
+      });
+
+      await pool.query(
+        'INSERT INTO notifications (user_id, message) VALUES (?, ?)',
+        [user.id, message]
+      );
+    }
+
+    console.log(`✅ Broadcast sent to ${users.length} users.`);
+  } catch (err) {
+    console.error('❌ Broadcast failed:', err);
+  }
+};
